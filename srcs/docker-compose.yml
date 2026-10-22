@@ -17,71 +17,71 @@ name: inception
 
 services:
 
-  # -------------------------------------------------------------------------- #
-  # 1. MariaDB Database Server
-  # -------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
+# 1. MariaDB Database Server
+# -------------------------------------------------------------------------- #
   mariadb:
-	build:
-		context: ./requirements/mariadb
-		dockerfile: Dockerfile
-	container_name: mariadb
-	image: inception_mariadb
-	# Load all environment variables (passwords, db name, users) from .env
-	env_file:
-		- .env
-	# Persist database files on host using the db_data volume
-	volumes:
-		- db_data:/var/lib/mysql
-	# Connect to the custom bridge network
-	networks:
-		- inception
-	# Auto-restart on crash or system reboot
-	restart: always
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    container_name: mariadb
+    image: inception_mariadb
+    # Load all environment variables (passwords, db name, users) from .env
+    env_file:
+      - .env.example
+    # Persist database files on host using the db_data volume
+    volumes:
+      - db_data:/var/lib/mysql
+    # Connect to the custom bridge network
+    networks:
+      - inception
+    # Auto-restart on crash or system reboot
+    restart: always
 
-  # -------------------------------------------------------------------------- #
-  # 2. WordPress Application (PHP-FPM)
-  # -------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
+# 2. WordPress Application (PHP-FPM)
+# -------------------------------------------------------------------------- #
   wordpress:
-	build:
-		context: ./requirements/wordpress
-		dockerfile: Dockerfile
-	container_name: wordpress
-	image: inception_wordpress
-	env_file:
-		- .env
-	# Share WordPress files with NGINX via the wp_data volume
-	volumes:
-		- wp_data:/var/www/html
-	networks:
-		- inception
-	# Ensure WordPress starts after MariaDB
-	depends_on:
-		- mariadb
-	restart: always
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    container_name: wordpress
+    image: inception_wordpress
+    env_file:
+      - .env.example
+    # Share WordPress files with NGINX via the wp_data volume
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - inception
+    # Ensure WordPress starts after MariaDB
+    depends_on:
+      - mariadb
+    restart: always
 
-  # -------------------------------------------------------------------------- #
-  # 3. NGINX Web Server (Reverse Proxy + TLS)
-  # -------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
+# 3. NGINX Web Server (Reverse Proxy + TLS)
+# -------------------------------------------------------------------------- #
   nginx:
-	build:
-		context: ./requirements/nginx
-		dockerfile: Dockerfile
-	container_name: nginx
-	image: inception_nginx
-	env_file:
-		- .env
-	# Expose HTTPS to host. HOST_PORT:CONTAINER_PORT
-	ports:
-	  - "443:443"
-	# Access WordPress files in read-only to serve static files (css, js, images)
-	volumes:
-		- wp_data:/var/www/html:ro
-	networks:
-		- inception
-	# Ensure NGINX starts after WordPress
-	depends_on:
-		- wordpress
-	restart: always
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    image: inception_nginx
+    env_file:
+      - .env.example
+    # Expose HTTPS to host. HOST_PORT:CONTAINER_PORT
+    ports:
+      - "443:443"
+    # Access WordPress files in read-only to serve static files (css, js, images)
+    volumes:
+      - wp_data:/var/www/html:ro
+    networks:
+      - inception
+    # Ensure NGINX starts after WordPress
+    depends_on:
+      - wordpress
+    restart: always
 
 # **************************************************************************** #
 #    VOLUMES (Persistent Storage on Host)                                      #
@@ -89,22 +89,22 @@ services:
 
 volumes:
   db_data:
-	name: db_data
-	driver: local
-	driver_opts:
-		type: none
-		# TODO: Change this path to real data directory on the host machine
-		device: /home/mcecchel/data/db_data
-		o: bind
+    name: db_data
+    driver: local
+    driver_opts:
+      type: none
+      # TODO: Change this path to real data directory on the host machine
+      device: /home/mcecchel/data/db_data
+      o: bind
 
   wp_data:
-	name: wp_data
-	driver: local
-	driver_opts:
-		type: none
-		# TODO: Change this path to real data directory on the host machine
-		device: /home/mcecchel/data/wp_data
-		o: bind
+    name: wp_data
+    driver: local
+    driver_opts:
+      type: none
+      # TODO: Change this path to real data directory on the host machine
+      device: /home/mcecchel/data/wp_data
+      o: bind
 
 # **************************************************************************** #
 #    NETWORKS                                                                  #
@@ -112,7 +112,7 @@ volumes:
 
 networks:
   inception:
-	name: inception
-	# Bridge driver isolates the network from the host but allows containers
-	# to communicate with each other using their container_names as DNS.
-	driver: bridge
+    name: inception
+    # Bridge driver isolates the network from the host but allows containers
+    # to communicate with each other using their container_names as DNS.
+    driver: bridge
