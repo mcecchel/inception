@@ -93,7 +93,7 @@ volumes:
 	driver: local
 	driver_opts:
 		type: none
-		# MANDATORY: Replace with your actual home path as required by subject
+		# TODO: Change this path to real data directory on the host machine
 		device: /home/mcecchel/data/db_data
 		o: bind
 
@@ -102,6 +102,7 @@ volumes:
 	driver: local
 	driver_opts:
 		type: none
+		# TODO: Change this path to real data directory on the host machine
 		device: /home/mcecchel/data/wp_data
 		o: bind
 
