@@ -1,4 +1,5 @@
 secrets/
-srcs/.env
-ssh.txt*
+.env
+*.txt
+*.pub
 ssh.txt*
