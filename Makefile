@@ -28,8 +28,10 @@ prepare:
 
 # Avvia i container in background costruendo le immagini se necessario
 up: prepare
+	@echo "Removing existing containers..."
+	@docker compose -f $(COMPOSE_FILE) down --remove-orphans
 	@echo "Starting $(NAME) containers..."
-	@docker compose -f $(COMPOSE_FILE) up -d --build
+	@docker compose -f $(COMPOSE_FILE) up -d --build --remove-orphans
 
 # Ferma e rimuove i container in esecuzione
 down:
@@ -52,4 +54,7 @@ clean: down
 # Pulizia profonda: rimuove container, reti, volumi Docker e cancella le cartelle sull'host
 fclean: clean
 	@echo "Removing persistent data and volumes..."
-	@docker volume
+	@docker volume rm db_data wp_data 2>/dev/null || true
+	@rm -rf $(DATA_PATH)/db_data $(DATA_PATH)/wp_data
+
+re: fclean all
