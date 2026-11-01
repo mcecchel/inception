@@ -98,13 +98,13 @@ Edit `srcs/.env` with your editor of choice. The file must define:
 | `DOMAIN_NAME` | Host domain name | `mcecchel.42.fr` |
 | `SQL_DATABASE` | MariaDB database name | `wordpress` |
 | `SQL_USER` | MariaDB application user | `wp_user` |
-| `SQL_PASSWORD` | MariaDB application password | `wp_password` |
-| `SQL_ROOT_PASSWORD` | MariaDB root password | `root_password` |
+| `SQL_PASSWORD` | MariaDB application password | Set locally in `srcs/.env` |
+| `SQL_ROOT_PASSWORD` | MariaDB root password | Set locally in `srcs/.env` |
 | `WP_ADMIN_USER` | WordPress admin login | `mcecchel` *(cannot contain admin/Administrator)* |
-| `WP_ADMIN_PASSWORD` | WordPress admin password | `admin_pass_123` |
+| `WP_ADMIN_PASSWORD` | WordPress admin password | Set locally in `srcs/.env` |
 | `WP_ADMIN_EMAIL` | WordPress admin email | `mcecchel@student.42.fr` |
 | `WP_USER` | WordPress author user | `user42` |
-| `WP_USER_PASSWORD` | WordPress author password | `user_pass_123` |
+| `WP_USER_PASSWORD` | WordPress author password | Set locally in `srcs/.env` |
 | `WP_USER_EMAIL` | WordPress author email | `user42@student.42.fr` |
 
 > **Security Note:** `srcs/.env` is excluded from version control via `.gitignore`. Never commit actual passwords to Git.
