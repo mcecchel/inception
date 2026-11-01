@@ -7,7 +7,7 @@ GREEN='\033[0;32m'
 RESETCOLOR='\033[0m'
 
 # Check if mandatory environment variables are set
-if [ -z "${DOMAIN_NAME}" ] \vert{}\vert{} [ -z "${SQL_DATABASE}" ] || [ -z "${SQL_USER}" ] \vert{}\vert{} [ -z "${SQL_PASSWORD}" ] || [ -z "${WP_ADMIN_USER}" ] \vert{}\vert{} [ -z "${WP_ADMIN_PASSWORD}" ] || [ -z "${WP_ADMIN_EMAIL}" ] \vert{}\vert{} [ -z "${WP_USER}" ] || [ -z "${WP_USER_PASSWORD}" ] \vert{}\vert{} [ -z "${WP_USER_EMAIL}" ]; then
+if [ -z "${DOMAIN_NAME}" ] || [ -z "${SQL_DATABASE}" ] || [ -z "${SQL_USER}" ] || [ -z "${SQL_PASSWORD}" ] || [ -z "${WP_ADMIN_USER}" ] || [ -z "${WP_ADMIN_PASSWORD}" ] || [ -z "${WP_ADMIN_EMAIL}" ] || [ -z "${WP_USER}" ] || [ -z "${WP_USER_PASSWORD}" ] || [ -z "${WP_USER_EMAIL}" ]; then
 	printf '%b\n' "${RED}Inception: WordPress environment variables are missing! Exiting.${RESETCOLOR}" >&2
 	exit 1
 fi
@@ -48,4 +48,16 @@ if [ ! -f "wp-config.php" ]; then
 		--url="https://${DOMAIN_NAME}" \
 		--title="${SITE_TITLE:-Inception}" \
 		--admin_user="${WP_ADMIN_USER}" \
-		--admin
+		--admin_password="${WP_ADMIN_PASSWORD}" \
+		--admin_email="${WP_ADMIN_EMAIL}" \
+		--skip-email
+
+	wp user create \
+		"${WP_USER}" \
+		"${WP_USER_EMAIL}" \
+		--role=author \
+		--user_pass="${WP_USER_PASSWORD}" \
+		--allow-root
+fi
+
+exec php-fpm8.2 -F

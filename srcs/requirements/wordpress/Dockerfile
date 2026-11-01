@@ -1,10 +1,12 @@
 FROM debian:bookworm
 
-# Update packages and install PHP-FPM, PHP-MySQL, curl, and MariaDB client
+# Update packages and install PHP-FPM, PHP-MySQL, curl, CA certificates, and MariaDB client.
+# CA certificates are required for curl to verify the HTTPS WP-CLI download.
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	php-fpm \
 	php-mysql \
 	curl \
+	ca-certificates \
 	mariadb-client \
 	&& rm -rf /var/lib/apt/lists/*
 
