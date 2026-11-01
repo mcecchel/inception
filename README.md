@@ -154,8 +154,15 @@ In this project, Docker is used to run three independent services (NGINX, WordPr
 
 ## Resources
 
+### Official Docker documentation
+
 - [Docker documentation](https://docs.docker.com/)
-- [Docker compose file reference](https://docs.docker.com/reference/compose-file/)
+- [Dockerfile reference](https://docs.docker.com/reference/dockerfile/)
+- [Docker Compose file reference](https://docs.docker.com/reference/compose-file/)
+
+### Complementary notes and guides
+
+- [LinuxHub - Creare un Dockerfile](https://linuxhub.it/articles/howto-creare-un-Dockerfile/)
 - [NGINX documentation](https://nginx.org/en/docs/)
 - [MariaDB Server documentation](https://mariadb.com/kb/en/documentation/)
 - [WP-CLI documentation](https://developer.wordpress.org/cli/commands/)
