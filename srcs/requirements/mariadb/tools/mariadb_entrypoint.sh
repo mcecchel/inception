@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eu
+
 # ANSI escape codes for terminal messages
 RED='\033[0;31m'
 GRAY='\033[0;90m'
@@ -28,27 +30,29 @@ if [ ! -d "/var/lib/mysql/${SQL_DATABASE}" ]; then
 	# Start the service in background to allow us to send SQL queries
 	/etc/init.d/mariadb start
 
-	# Wait a few seconds to ensure the daemon is fully up and ready to accept connections
-	sleep 3
+	# Wait until the local Unix socket accepts authenticated root connections
+	until mariadb \
+		--protocol=socket \
+		--socket=/run/mysqld/mysqld.sock \
+		-uroot \
+		-e "SELECT 1;" > /dev/null 2>&1
+	do
+		sleep 1
+	done
 
 	printf '%b\n' "${GRAY}Inception: Creating database and users...${RESETCOLOR}"
 
-	# 1. Create the database for WordPress
-	mysql -e "CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;"
-	
-	# 2. Create the WordPress user. 
-	# The '%' symbol means this user can connect from ANY IP address (which is needed
-	# since WordPress is in a different container).
-	mysql -e "CREATE USER IF NOT EXISTS \`${SQL_USER}\`@'%' IDENTIFIED BY '${SQL_PASSWORD}';";
-	
-	# 3. Grant all privileges to the user on that specific database
-	mysql -e "GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO \`${SQL_USER}\`@'%';";
-	
-	# 4. Change the root password for security
-	mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';";
-	
-	# 5. Flush privileges to apply all the changes
-	mysql -e "FLUSH PRIVILEGES;"
+	# Use the initialization socket explicitly so setup does not fall back to TCP.
+	mariadb \
+		--protocol=socket \
+		--socket=/run/mysqld/mysqld.sock \
+		-uroot <<-SQL
+		CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
+		CREATE USER IF NOT EXISTS '${SQL_USER}'@'%' IDENTIFIED BY '${SQL_PASSWORD}';
+		GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO '${SQL_USER}'@'%';
+		ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';
+		FLUSH PRIVILEGES;
+	SQL
 
 	printf '%b\n' "${GRAY}Inception: Shutting down background MariaDB...${RESETCOLOR}"
 	
