@@ -26,8 +26,8 @@ services:
     image: mariadb:inception
     # Never pull from registry; always use local build
     pull_policy: never
-    # Preventing corruption giving DB 60s to shut down gracefully
-    stop_grace_period: 60s
+    # Time given to MariaDB to shut down gracefully on SIGTERM before SIGKILL
+    stop_grace_period: 30s
     # Load all environment variables (passwords, db name, users) from .env
     env_file:
       - .env

@@ -8,8 +8,7 @@ NAME        = inception
 LOGIN       = mcecchel
 DATA_PATH   = /home/$(LOGIN)/data
 
-# Percorso del file docker-compose.yml 
-# (cambialo in srcs/docker-compose.yml se decidi di metterlo nella cartella srcs/)
+# Percorso del file docker-compose.yml (si trova nella cartella srcs/)
 COMPOSE_FILE = ./srcs/docker-compose.yml
 
 # **************************************************************************** #
@@ -51,10 +50,12 @@ clean: down
 	@echo "Cleaning unused Docker resources..."
 	@docker system prune -a --force
 
-# Pulizia profonda: rimuove container, reti, volumi Docker e cancella le cartelle sull'host
+# Pulizia profonda: rimuove container, reti, volumi Docker e cancella le cartelle sull'host.
+# I file nelle cartelle appartengono agli utenti interni ai container (mysql, root),
+# quindi servono i permessi di root per cancellarli.
 fclean: clean
 	@echo "Removing persistent data and volumes..."
 	@docker volume rm db_data wp_data 2>/dev/null || true
-	@rm -rf $(DATA_PATH)/db_data $(DATA_PATH)/wp_data
+	@sudo rm -rf $(DATA_PATH)/db_data $(DATA_PATH)/wp_data
 
 re: fclean all

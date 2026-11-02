@@ -171,7 +171,7 @@ The root `Makefile` automates directory creation, image building, and container 
 - **Role:** Executes PHP code for WordPress using FastCGI Process Manager.
 - **Port:** Internal port `9000` (not published to the host).
 - **Automation:** Uses WP-CLI inside its entrypoint script to automatically download, configure, and install WordPress without relying on interactive browser wizards.
-- **Users Created:** 
+- **Users Created:**
   1. Administrator (`WP_ADMIN_USER`).
   2. Author (`WP_USER`).
 
@@ -217,18 +217,18 @@ volumes:
 
 ## Entrypoint scripts and PID 1
 
-To strictly avoid hacky patches like `tail -f`, `sleep infinity`, or infinite `while` loops (forbidden by the 42 subject), every service uses an entrypoint script that ends with `exec "$@"`.
+To strictly avoid hacky patches like `tail -f`, `sleep infinity`, or infinite `while` loops (forbidden by the 42 subject), every service uses an entrypoint script that ends with an `exec` on the service itself (`exec nginx -g "daemon off;"`, `exec php-fpm8.2 -F`, `exec mysqld --user=mysql`).
 
 ### Why `exec` is Mandatory:
-- Using `exec` replaces the shell process (`/bin/sh` or `/bin/bash`) with the target service binary (e.g., `nginx`, `php-fpm8.2`, or `mariadbd`).
+- Using `exec` replaces the shell process (`/bin/sh` or `/bin/bash`) with the target service binary (e.g., `nginx`, `php-fpm8.2`, or `mysqld`).
 - This ensures the daemon becomes **PID 1** inside the container.
 - PID 1 receives POSIX signals directly (e.g., `SIGTERM`, `SIGINT`), allowing Docker to stop containers cleanly without hanging or leaving zombie processes.
 
 ### Idempotent Bootstrap Pattern:
 Entrypoint scripts verify if initial setup has already occurred before executing commands:
 - **MariaDB:** Checks if `/var/lib/mysql/${SQL_DATABASE}` exists. If absent, runs database initialization and SQL user creation scripts.
-- **WordPress:** Checks for `/var/www/html/wp-config.php`. If absent, uses WP-CLI to download files, generate configuration, run core installation, and create users.
-- **NGINX:** Checks if TLS certificates (`/etc/nginx/ssl/nginx.crt`) exist. If absent, generates self-signed certificates via OpenSSL.
+- **WordPress:** Waits until the WordPress DB user can log in. If `/var/www/html/wp-config.php` is absent, uses WP-CLI to download files and generate the configuration; if `wp core is-installed` fails, runs core installation and creates the users.
+- **NGINX:** Checks if TLS certificates (`/etc/nginx/ssl/inception.crt` and `inception.key`) exist. If absent, generates self-signed certificates via OpenSSL.
 
 ---
 

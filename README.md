@@ -7,7 +7,7 @@
 Inception is a system administration project that asks students to build a small web infrastructure from scratch using Docker containers.
 The goal is to set up a fully functional **WordPress website** served over **HTTPS**, backed by a **MariaDB database**, and reverse-proxied through **NGINX** — all managed with **Docker Compose** inside a virtual machine.
 
-Every service runs in its own dedicated container, built from a custom Dockerfile based on Debian Linux (bullseye/bookworm). No pre-built service images are pulled from Docker Hub; only the base OS layer is used.
+Every service runs in its own dedicated container, built from a custom Dockerfile based on Debian Linux (bookworm, the penultimate stable release). No pre-built service images are pulled from Docker Hub; only the base OS layer is used.
 The project enforces strict security practices: credentials are managed through a `.env` file, TLS is the only accepted protocol (TLSv1.2/TLSv1.3), and no passwords appear in Dockerfiles or version-controlled files.
 
 ### Architecture overview
@@ -121,7 +121,7 @@ In this project, Docker is used to run three independent services (NGINX, WordPr
 ### Design choices
 
 - **Debian Base:** Images are built from the penultimate stable version of Debian, providing a stable and familiar ecosystem while complying with the 42 subject constraints.
-- **Custom Entrypoints:** Bash scripts are used as entrypoints (`exec "$@"`) to handle automated setup (like WP-CLI installations and MariaDB bootstrapping) while replacing the shell with the main service process (PID 1) to ensure graceful shutdowns.
+- **Custom Entrypoints:** Shell scripts are used as entrypoints to handle automated setup (like WP-CLI installations and MariaDB bootstrapping). Each script ends with `exec` on the main service (`nginx`, `php-fpm8.2 -F`, `mysqld`), which replaces the shell and makes the service PID 1, so it receives `SIGTERM` directly and shuts down gracefully.
 - **No Infinite Loops:** Commands like `tail -f` or `sleep infinity` are strictly avoided.
 
 ---
@@ -129,19 +129,19 @@ In this project, Docker is used to run three independent services (NGINX, WordPr
 ### Virtual Machines vs Docker
 
 - **Virtual Machines (VMs):** VMs emulate a complete physical computer via a hypervisor (e.g., VirtualBox). Each VM runs its own full operating system kernel, providing strong hardware-level isolation at the cost of high CPU, memory, and disk overhead.
-- **Docker Containers:** Containers share the host OS kernel and virtualize only the application layer (process-level isolation via namespaces and cgroups). They are extremely lightweight, start in seconds, and have minimal resource overhead. 
+- **Docker Containers:** Containers share the host OS kernel and virtualize only the application layer (process-level isolation via namespaces and cgroups). They are extremely lightweight, start in seconds, and have minimal resource overhead.
 - **Use in this project:** Inception runs Docker containers to manage the microservices, but the entire environment is hosted inside a Virtual Machine to provide a controlled, sandboxed development space as required by the curriculum.
 
 ### Secrets vs Environment Variables
 
-- **Environment Variables:** Passed into the container's process environment at runtime. They are easy to implement via a `.env` file but can be exposed through debugging tools or process listings. 
+- **Environment Variables:** Passed into the container's process environment at runtime. They are easy to implement via a `.env` file but can be exposed through debugging tools or process listings.
 - **Docker Secrets:** Mounted as read-only files (usually in `/run/secrets/`) directly into the container, keeping them completely hidden from the environment variables and image layers.
 - **Use in this project:** The 42 subject mandates the use of environment variables stored in a `.env` file. While Docker secrets are generally recommended for production, the `.env` approach was strictly implemented to fulfill the project's requirements.
 
 ### Docker Network vs Host Network
 
 - **Host Network:** The container shares the host's networking namespace directly. All ports opened by the container are exposed on the host, increasing the risk of port conflicts and reducing security isolation. The `network: host` directive is explicitly forbidden by the subject.
-- **Docker Bridge Network:** A private virtual network managed by Docker. It provides automatic DNS resolution by service name (e.g., WordPress can reach MariaDB simply by pinging `mariadb`). 
+- **Docker Bridge Network:** A private virtual network managed by Docker. It provides automatic DNS resolution by service name (e.g., WordPress can reach MariaDB simply by pinging `mariadb`).
 - **Use in this project:** A custom bridge network named `inception` isolates the services. Only the NGINX port (`443`) is exposed to the outside world, keeping the database and PHP-FPM securely hidden.
 
 ### Docker Volumes vs Bind Mounts
