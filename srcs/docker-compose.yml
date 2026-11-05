@@ -94,6 +94,24 @@ services:
       - wordpress
     restart: always
 
+# -------------------------------------------------------------------------- #
+# 4. Adminer (Database Management)
+# -------------------------------------------------------------------------- #
+  adminer:
+    build:
+      context: ./requirements/bonus/adminer
+      dockerfile: Dockerfile
+    container_name: adminer
+    image: adminer:inception
+    pull_policy: never
+    env_file:
+      - .env
+    networks:
+      - inception
+    depends_on:
+      - mariadb
+    restart: always
+
 # **************************************************************************** #
 #    VOLUMES (Persistent Storage on Host)                                      #
 # **************************************************************************** #
