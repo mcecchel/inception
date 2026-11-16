@@ -16,7 +16,7 @@ COMPOSE_FILE = ./srcs/docker-compose.yml
 # **************************************************************************** #
 
 # Target principale: crea le cartelle sull'host ed effettua la build/up
-all: prepare up
+all: up
 
 # Crea le cartelle sull'host necessarie ai volumi PRIMA di avviare Docker.
 # In questo modo eviti che Docker le crei automaticamente con permessi da root.
@@ -59,3 +59,5 @@ fclean: clean
 	@sudo rm -rf $(DATA_PATH)/db_data $(DATA_PATH)/wp_data
 
 re: fclean all
+
+.PHONY: all prepare up down status logs clean fclean re

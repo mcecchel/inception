@@ -90,22 +90,18 @@ make up
 
 This will:
 1. Automatically create the host data directories (`/home/mcecchel/data/db_data`, `/home/mcecchel/data/wp_data`).
-2. Build all three Docker images from source based on Debian.
+2. Build the Docker images from source based on Debian.
 3. Start the containers in the background.
 
 ### Subsequent starts
 
-To start the stack if it was previously stopped (without rebuilding images):
+To start the stack again after `make down`, or to rebuild after changing a Dockerfile or configuration (Docker reuses its build cache, data is kept):
 
 ```bash
 make up
 ```
 
-To forcefully rebuild images (e.g., after changing a Dockerfile or configuration) and start the stack from scratch, use:
-
-```bash
-make re
-```
+> **Attention**: `make re` runs `fclean` first and **deletes all data**. Use it only for a full reset.
 
 ---
 
@@ -267,9 +263,9 @@ Expected response: `HTTP/1.1 200 OK` (or a `301`/`302` redirect to the WordPress
 | Stop the stack | `make down` |
 | Show running containers | `make status` |
 | View logs | `make logs` |
-| Prune unused Docker resources | `make clean` |
+| Remove all unused Docker images/networks (whole machine) | `make clean` |
 | Full reset (destroy data) | `make fclean` |
-| Complete rebuild from scratch | `make re` |
+| Complete rebuild from scratch (**deletes data**) | `make re` |
 
 ---
 
@@ -277,7 +273,7 @@ Expected response: `HTTP/1.1 200 OK` (or a `301`/`302` redirect to the WordPress
 
 ### Container stays restarting or crashing
 
-The WordPress container waits for MariaDB to be fully healthy before starting its own bootstrap. MariaDB might need extra time on first run to initialize system tables. Check the logs with:
+Docker Compose starts the WordPress container only after the MariaDB healthcheck passes. MariaDB might need extra time on first run to initialize system tables. Check the logs with:
 
 ```bash
 make logs

@@ -5,8 +5,8 @@
 FROM debian:bookworm
 
 # Install PHP-FPM, the MySQL extension for PHP, and wget for downloading Adminer
-# Note: php-session is included to ensure session handling works correctly
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	ca-certificates \
 	php-fpm \
 	php-mysql \
 	wget \
@@ -18,7 +18,9 @@ RUN mkdir -p /var/www/adminer \
 WORKDIR /var/www/adminer
 
 # Download Adminer and place it in the right directory
-RUN wget -O adminer.php https://www.adminer.org/latest.php
+# Pinned version (no "latest"). Check https://github.com/vrana/adminer/releases and update if needed.
+ARG ADMINER_VERSION=4.17.1
+RUN wget -O adminer.php https://github.com/vrana/adminer/releases/download/v${ADMINER_VERSION}/adminer-${ADMINER_VERSION}-mysql.php
 
 # Set the ownership of the Adminer directory to the www-data user and group
 RUN chown -R www-data:www-data /var/www/adminer

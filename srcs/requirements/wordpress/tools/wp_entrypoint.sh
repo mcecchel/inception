@@ -16,22 +16,9 @@ if [ -z "${DOMAIN_NAME}" ] || [ -z "${SQL_DATABASE}" ] || [ -z "${SQL_USER}" ] |
 	exit 1
 fi
 
-# 1. Wait for MariaDB to start and accept connections
-# The container won't proceed until the WordPress user can really log in to the
-# database. "mariadb-admin ping" is not enough: it succeeds even when the login
-# is refused (e.g. the user has not been created yet during the first boot).
-# The wait is limited: after 60 attempts (about 2 minutes) the container exits and Docker restarts it.
-printf '%b\n' "${GRAY}Inception: Waiting for MariaDB database to be ready...${RESETCOLOR}"
-tries=0
-until mariadb -h mariadb -u"${SQL_USER}" -p"${SQL_PASSWORD}" "${SQL_DATABASE}" -e "SELECT 1;" > /dev/null 2>&1; do
-	tries=$((tries + 1))
-	if [ "${tries}" -ge 60 ]; then
-		printf '%b\n' "${RED}Inception: MariaDB is not reachable after 60 attempts. Exiting.${RESETCOLOR}" >&2
-		exit 1
-	fi
-	sleep 2
-done
-printf '%b\n' "${GREEN}Inception: MariaDB is ready.${RESETCOLOR}"
+# 1. MariaDB readiness is guaranteed by the healthcheck + depends_on in docker-compose.yml.
+# If the DB is still unreachable, the WP-CLI commands below fail, set -e stops the
+# script and Docker restarts the container.
 
 # Move to the web root folder shared with NGINX via volume
 cd /var/www/html

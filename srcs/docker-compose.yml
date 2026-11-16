@@ -37,6 +37,13 @@ services:
     # Connect to the custom bridge network
     networks:
       - inception
+    # Healthy only when the WordPress user can really log in. WordPress waits for it.
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -h 127.0.0.1 -u\"$$SQL_USER\" -p\"$$SQL_PASSWORD\" \"$$SQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
     # Auto-restart on crash or system reboot
     restart: always
 
@@ -61,9 +68,10 @@ services:
       - wp_data:/var/www/html
     networks:
       - inception
-    # Ensure WordPress starts after MariaDB
+    # Start only when MariaDB is healthy (replaces the wait loop in the entrypoint)
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     restart: always
 
 # -------------------------------------------------------------------------- #
@@ -79,8 +87,9 @@ services:
     image: nginx:inception
     # Never pull from registry; always use local build
     pull_policy: never
-    env_file:
-      - .env
+    # NGINX only needs the domain name, not the database/WordPress passwords
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
     # Expose HTTPS to host. HOST_PORT:CONTAINER_PORT
     ports:
       - "443:443"
@@ -89,9 +98,10 @@ services:
       - wp_data:/var/www/html:ro
     networks:
       - inception
-    # Ensure NGINX starts after WordPress
+    # Ensure NGINX starts after WordPress and Adminer (nginx.conf resolves both hostnames at startup)
     depends_on:
       - wordpress
+      - adminer
     restart: always
 
 # -------------------------------------------------------------------------- #
@@ -104,12 +114,11 @@ services:
     container_name: adminer
     image: adminer:inception
     pull_policy: never
-    env_file:
-      - .env
     networks:
       - inception
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     restart: always
 
 # **************************************************************************** #

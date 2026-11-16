@@ -45,6 +45,9 @@ inception/
         │   │   └── nginx.conf             # NGINX server configuration
         │   └── tools/
         │       └── nginx_entrypoint.sh    # TLS certificate generation script
+        ├── bonus/
+        │   └── adminer/
+        │       └── Dockerfile             # Adminer (PHP-FPM, pinned version)
         └── wordpress/
             ├── Dockerfile                 # WordPress/PHP-FPM container build instructions (Debian)
             ├── conf/
@@ -127,13 +130,13 @@ The root `Makefile` automates directory creation, image building, and container 
 
 | Command | Internal Action |
 | ------- | --------------- |
-| `make up` / `make all` | Creates `/home/mcecchel/data/` directories, builds Docker images if missing, and starts containers in detached mode. |
+| `make up` / `make all` | Creates `/home/mcecchel/data/` directories, builds the images (`--build`, cached layers are reused) and starts containers in detached mode. |
 | `make down` | Stops and removes containers while keeping volume data intact. |
 | `make status` | Displays the status of active containers (`docker compose ps`). |
 | `make logs` | Displays container logs (`docker compose logs`). |
 | `make clean` | Stops containers and removes unused Docker images/resources. |
 | `make fclean` | Stops containers, removes images/volumes, and deletes data in `/home/mcecchel/data/`. |
-| `make re` | Runs `fclean` followed by `make up` to rebuild the entire stack from scratch. |
+| `make re` | Runs `fclean` followed by `make up`: full rebuild, **deletes all data**. |
 
 ---
 
@@ -227,7 +230,7 @@ To strictly avoid hacky patches like `tail -f`, `sleep infinity`, or infinite `w
 ### Idempotent Bootstrap Pattern:
 Entrypoint scripts verify if initial setup has already occurred before executing commands:
 - **MariaDB:** Checks if `/var/lib/mysql/${SQL_DATABASE}` exists. If absent, runs database initialization and SQL user creation scripts.
-- **WordPress:** Waits until the WordPress DB user can log in. If `/var/www/html/wp-config.php` is absent, uses WP-CLI to download files and generate the configuration; if `wp core is-installed` fails, runs core installation and creates the users.
+- **WordPress:** If `/var/www/html/wp-config.php` is absent, uses WP-CLI to download files and generate the configuration; if `wp core is-installed` fails, runs core installation and creates the users.
 - **NGINX:** Checks if TLS certificates (`/etc/nginx/ssl/inception.crt` and `inception.key`) exist. If absent, generates self-signed certificates via OpenSSL.
 
 ---
@@ -263,7 +266,7 @@ openssl s_client -connect mcecchel.42.fr:443 -tls1_3
 
 ### 1. WordPress fails to connect to MariaDB on initial startup
 - **Cause:** MariaDB container is still initializing system tables when WordPress starts.
-- **Solution:** The `wp_entrypoint.sh` includes a retry loop using `mariadb-admin ping` to wait until MariaDB responds on port 3306 before running WP-CLI setup commands.
+- **Solution:** `mariadb` has a Compose `healthcheck` (a real login with the WordPress user) and `wordpress` uses `depends_on: condition: service_healthy`, so WP-CLI runs only when the DB accepts logins. If it still fails, `set -e` stops the script and Docker restarts the container.
 
 ### 2. File permission issues on `/home/mcecchel/data`
 - **Cause:** Host directories were created by Docker with `root` ownership.
