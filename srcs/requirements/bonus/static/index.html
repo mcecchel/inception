@@ -7,27 +7,76 @@
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
-	<!-- Decorative pixel stars (two layers that twinkle out of phase) -->
+	<!-- Decorative pixel stars & CRT vignette -->
 	<div class="stars stars-a" aria-hidden="true"></div>
 	<div class="stars stars-b" aria-hidden="true"></div>
+	<div class="crt-overlay" aria-hidden="true"></div>
+
+	<!-- Reusable 12x12 pixel ghost sprite definition -->
+	<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+		<defs>
+			<g id="ghost-sprite">
+				<g>
+					<rect class="gb" x="4" y="0" width="4" height="1"/><rect class="gb" x="2" y="1" width="8" height="1"/>
+					<rect class="gb" x="1" y="2" width="10" height="1"/><rect class="gb" x="1" y="3" width="2" height="1"/>
+					<rect class="gw" x="3" y="3" width="2" height="1"/><rect class="gb" x="5" y="3" width="2" height="1"/>
+					<rect class="gw" x="7" y="3" width="2" height="1"/><rect class="gb" x="9" y="3" width="2" height="1"/>
+					<rect class="gb" x="0" y="4" width="3" height="1"/><rect class="gw" x="3" y="4" width="1" height="1"/>
+					<rect class="gk" x="4" y="4" width="1" height="1"/><rect class="gb" x="5" y="4" width="2" height="1"/>
+					<rect class="gw" x="7" y="4" width="1" height="1"/><rect class="gk" x="8" y="4" width="1" height="1"/>
+					<rect class="gb" x="9" y="4" width="3" height="1"/><rect class="gb" x="0" y="5" width="3" height="1"/>
+					<rect class="gw" x="3" y="5" width="2" height="1"/><rect class="gb" x="5" y="5" width="2" height="1"/>
+					<rect class="gw" x="7" y="5" width="2" height="1"/><rect class="gb" x="9" y="5" width="3" height="1"/>
+					<rect class="gb" x="0" y="6" width="12" height="1"/><rect class="gb" x="0" y="7" width="12" height="1"/>
+					<rect class="gb" x="0" y="8" width="12" height="1"/><rect class="gb" x="0" y="9" width="12" height="1"/>
+				</g>
+				<g class="feet-a">
+					<rect class="gb" x="0" y="10" width="2" height="1"/><rect class="gb" x="3" y="10" width="6" height="1"/>
+					<rect class="gb" x="10" y="10" width="2" height="1"/><rect class="gb" x="0" y="11" width="1" height="1"/>
+					<rect class="gb" x="4" y="11" width="4" height="1"/><rect class="gb" x="11" y="11" width="1" height="1"/>
+				</g>
+				<g class="feet-b">
+					<rect class="gb" x="0" y="10" width="3" height="1"/><rect class="gb" x="4" y="10" width="4" height="1"/>
+					<rect class="gb" x="9" y="10" width="3" height="1"/><rect class="gb" x="1" y="11" width="1" height="1"/>
+					<rect class="gb" x="5" y="11" width="2" height="1"/><rect class="gb" x="10" y="11" width="1" height="1"/>
+				</g>
+			</g>
+		</defs>
+	</svg>
 
 	<main>
-		<h1 class="title">
-			<span>YOU JUST</span>
-			<span>LOST</span>
-			<span>THE GAME</span>
-		</h1>
+		<section class="arcade-card" aria-labelledby="main-title">
+			<div class="badge" id="status-badge">GRACE PERIOD ACTIVE</div>
 
-		<p class="caption" id="caption">you can't lose again for</p>
-		<p class="counter" aria-live="off"><span id="min">30</span><span class="colon">:</span><span id="sec">00</span></p>
+			<h1 class="title" id="main-title">
+				<span>YOU JUST</span>
+				<span>LOST</span>
+				<span>THE GAME</span>
+			</h1>
 
-		<p class="question">do you remember the game?</p>
-		<button id="reset" type="button">YES I DO</button>
+			<div class="timer-box">
+				<p class="caption" id="caption">you can't lose again for</p>
+				<p class="counter" aria-live="off">
+					<span id="min">30</span><span class="colon">:</span><span id="sec">00</span>
+				</p>
+				<div class="progress-track" aria-hidden="true">
+					<div class="progress-fill" id="progress-fill"></div>
+				</div>
+			</div>
+
+			<div class="action-box">
+				<p class="question">do you remember the game?</p>
+				<button id="reset" type="button">YES I DO</button>
+			</div>
+		</section>
 	</main>
 
-	<!-- Two pixel ghosts, generated from a 12x12 pixel map (animated in style.css) -->
-	<svg class="ghost ghost-left" viewBox="0 0 12 12" aria-hidden="true" focusable="false" shape-rendering="crispEdges"><g><rect class="gb" x="4" y="0" width="4" height="1"/><rect class="gb" x="2" y="1" width="8" height="1"/><rect class="gb" x="1" y="2" width="10" height="1"/><rect class="gb" x="1" y="3" width="2" height="1"/><rect class="gw" x="3" y="3" width="2" height="1"/><rect class="gb" x="5" y="3" width="2" height="1"/><rect class="gw" x="7" y="3" width="2" height="1"/><rect class="gb" x="9" y="3" width="2" height="1"/><rect class="gb" x="0" y="4" width="3" height="1"/><rect class="gw" x="3" y="4" width="1" height="1"/><rect class="gk" x="4" y="4" width="1" height="1"/><rect class="gb" x="5" y="4" width="2" height="1"/><rect class="gw" x="7" y="4" width="1" height="1"/><rect class="gk" x="8" y="4" width="1" height="1"/><rect class="gb" x="9" y="4" width="3" height="1"/><rect class="gb" x="0" y="5" width="3" height="1"/><rect class="gw" x="3" y="5" width="2" height="1"/><rect class="gb" x="5" y="5" width="2" height="1"/><rect class="gw" x="7" y="5" width="2" height="1"/><rect class="gb" x="9" y="5" width="3" height="1"/><rect class="gb" x="0" y="6" width="12" height="1"/><rect class="gb" x="0" y="7" width="12" height="1"/><rect class="gb" x="0" y="8" width="12" height="1"/><rect class="gb" x="0" y="9" width="12" height="1"/></g><g class="feet-a"><rect class="gb" x="0" y="10" width="2" height="1"/><rect class="gb" x="3" y="10" width="6" height="1"/><rect class="gb" x="10" y="10" width="2" height="1"/><rect class="gb" x="0" y="11" width="1" height="1"/><rect class="gb" x="4" y="11" width="4" height="1"/><rect class="gb" x="11" y="11" width="1" height="1"/></g><g class="feet-b"><rect class="gb" x="0" y="10" width="3" height="1"/><rect class="gb" x="4" y="10" width="4" height="1"/><rect class="gb" x="9" y="10" width="3" height="1"/><rect class="gb" x="1" y="11" width="1" height="1"/><rect class="gb" x="5" y="11" width="2" height="1"/><rect class="gb" x="10" y="11" width="1" height="1"/></g></svg>
-	<svg class="ghost ghost-right" viewBox="0 0 12 12" aria-hidden="true" focusable="false" shape-rendering="crispEdges"><g><rect class="gb" x="4" y="0" width="4" height="1"/><rect class="gb" x="2" y="1" width="8" height="1"/><rect class="gb" x="1" y="2" width="10" height="1"/><rect class="gb" x="1" y="3" width="2" height="1"/><rect class="gw" x="3" y="3" width="2" height="1"/><rect class="gb" x="5" y="3" width="2" height="1"/><rect class="gw" x="7" y="3" width="2" height="1"/><rect class="gb" x="9" y="3" width="2" height="1"/><rect class="gb" x="0" y="4" width="3" height="1"/><rect class="gw" x="3" y="4" width="1" height="1"/><rect class="gk" x="4" y="4" width="1" height="1"/><rect class="gb" x="5" y="4" width="2" height="1"/><rect class="gw" x="7" y="4" width="1" height="1"/><rect class="gk" x="8" y="4" width="1" height="1"/><rect class="gb" x="9" y="4" width="3" height="1"/><rect class="gb" x="0" y="5" width="3" height="1"/><rect class="gw" x="3" y="5" width="2" height="1"/><rect class="gb" x="5" y="5" width="2" height="1"/><rect class="gw" x="7" y="5" width="2" height="1"/><rect class="gb" x="9" y="5" width="3" height="1"/><rect class="gb" x="0" y="6" width="12" height="1"/><rect class="gb" x="0" y="7" width="12" height="1"/><rect class="gb" x="0" y="8" width="12" height="1"/><rect class="gb" x="0" y="9" width="12" height="1"/></g><g class="feet-a"><rect class="gb" x="0" y="10" width="2" height="1"/><rect class="gb" x="3" y="10" width="6" height="1"/><rect class="gb" x="10" y="10" width="2" height="1"/><rect class="gb" x="0" y="11" width="1" height="1"/><rect class="gb" x="4" y="11" width="4" height="1"/><rect class="gb" x="11" y="11" width="1" height="1"/></g><g class="feet-b"><rect class="gb" x="0" y="10" width="3" height="1"/><rect class="gb" x="4" y="10" width="4" height="1"/><rect class="gb" x="9" y="10" width="3" height="1"/><rect class="gb" x="1" y="11" width="1" height="1"/><rect class="gb" x="5" y="11" width="2" height="1"/><rect class="gb" x="10" y="11" width="1" height="1"/></g></svg>
+	<svg class="ghost ghost-left" viewBox="0 0 12 12" aria-hidden="true" focusable="false" shape-rendering="crispEdges">
+		<use href="#ghost-sprite"/>
+	</svg>
+	<svg class="ghost ghost-right" viewBox="0 0 12 12" aria-hidden="true" focusable="false" shape-rendering="crispEdges">
+		<use href="#ghost-sprite"/>
+	</svg>
 
 	<noscript><p class="noscript">enable JavaScript to see the countdown</p></noscript>
 	<script src="script.js"></script>
