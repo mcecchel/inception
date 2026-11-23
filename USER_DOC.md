@@ -193,6 +193,7 @@ The file contains the following variables:
 | `DOMAIN_NAME` | Website domain name (`mcecchel.42.fr`) |
 | `SQL_DATABASE` | MariaDB database name |
 | `SQL_USER` | MariaDB application user login |
+| `SQL_PORT` | MariaDB TCP port (default `3306`) |
 | `SQL_PASSWORD` | MariaDB application user password |
 | `SQL_ROOT_PASSWORD` | MariaDB root password |
 | `WP_ADMIN_USER` | WordPress administrator login |
@@ -260,6 +261,7 @@ Expected response: `HTTP/1.1 200 OK` (or a `301`/`302` redirect to the WordPress
 | Task | Command |
 | ---- | ------- |
 | Start the stack | `make up` |
+| Start the stack with the bonus services (Adminer, static website) | `make bonus` |
 | Stop the stack | `make down` |
 | Show running containers | `make status` |
 | View logs | `make logs` |

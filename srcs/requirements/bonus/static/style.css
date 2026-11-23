@@ -1,0 +1,268 @@
+/* ---------------------------------------------------------------------------
+ * THE GAME - static pixel-art page. Plain CSS, no libraries, no external request:
+ * even the pixel font is self-hosted (fonts/, SIL Open Font License).
+ * ------------------------------------------------------------------------- */
+
+@font-face {
+	font-family: "Press Start 2P";
+	src: url("fonts/press-start-2p.woff2") format("woff2");
+	font-display: swap;
+}
+
+:root {
+	--bg:        #0f0b21;
+	--title:     #ff4d6d;
+	--title-sh:  #5c1230;
+	--counter:   #5cffb1;
+	--text:      #9aa0ff;
+	--btn:       #ffd23f;
+	--btn-sh:    #b8860b;
+	--ink:       #1a1033;
+	--alert:     #ff4d6d;
+	/* Title/counter size: limited by BOTH width and height, so it always fits. */
+	--big:       min(9vw, 13vh);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: "Press Start 2P", "Courier New", monospace;
+	overflow: hidden;
+	/* Scanlines: a thin dark line every 4px on top of the background */
+	background-image: repeating-linear-gradient(
+		to bottom, transparent 0, transparent 3px, rgba(0, 0, 0, 0.25) 3px, rgba(0, 0, 0, 0.25) 4px);
+}
+
+main {
+	position: relative;
+	z-index: 1;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	padding: 2vh 2vw;
+}
+
+/* ---- Main subject: the title ------------------------------------------- */
+.title {
+	font-size: var(--big);
+	line-height: 1.2;
+	color: var(--title);
+	text-shadow: 0.08em 0.08em 0 var(--title-sh);
+	/* steps(): the wobble moves in jumps (2 frames), like a sprite, not smoothly */
+	animation: wobble 1s steps(2, jump-none) infinite alternate,
+			   glitch 6s steps(1) infinite;
+}
+.title span { display: block; }
+
+@keyframes wobble {
+	from { transform: translateY(0); }
+	to   { transform: translateY(-0.04em); }
+}
+
+/* Short glitch (cyan/pink edges) once in a while */
+@keyframes glitch {
+	0%, 92%, 100% { text-shadow: 0.08em 0.08em 0 var(--title-sh); }
+	93% { text-shadow: -0.06em 0 0 #00e5ff, 0.06em 0 0 #ff00c8; }
+	95% { text-shadow: 0.06em 0 0 #00e5ff, -0.06em 0 0 #ff00c8; }
+	97% { text-shadow: 0.08em 0.08em 0 var(--title-sh); }
+}
+
+/* ---- Countdown ----------------------------------------------------------- */
+.caption {
+	margin-top: 3vh;
+	font-size: min(2.2vw, 3.2vh);
+}
+
+.counter {
+	margin-top: 1.5vh;
+	font-size: calc(var(--big) * 0.85);
+	color: var(--counter);
+	text-shadow: 0.07em 0.07em 0 #0b4f38;
+}
+.colon { animation: blink 1s steps(1) infinite; }
+
+@keyframes blink {
+	0%   { opacity: 1; }
+	50%  { opacity: 0; }
+}
+
+/* Countdown finished: red, whole counter blinks */
+body.over .counter { color: var(--alert); text-shadow: 0.07em 0.07em 0 var(--title-sh); animation: blink 1s steps(1) infinite; }
+body.over .colon   { animation: none; }
+
+/* ---- Button ------------------------------------------------------------------ */
+.question {
+	margin-top: 4vh;
+	font-size: min(2vw, 3vh);
+}
+
+button {
+	margin-top: 2vh;
+	font-family: inherit;
+	font-size: min(3vw, 4.5vh);
+	padding: 0.8em 1.4em;
+	color: var(--ink);
+	background: var(--btn);
+	border: 0;
+	cursor: pointer;
+	/* Pixel look: hard shadow below + dark 'outline' made of box-shadows (no blur) */
+	box-shadow: 0 0.35em 0 var(--btn-sh), 0 0 0 0.15em var(--ink), 0 0.35em 0 0.15em var(--ink);
+}
+button:hover  { background: #ffe27a; }
+button:active {
+	transform: translateY(0.3em);
+	box-shadow: 0 0.05em 0 var(--btn-sh), 0 0 0 0.15em var(--ink), 0 0.05em 0 0.15em var(--ink);
+}
+button:focus-visible { outline: 0.2em dashed var(--counter); outline-offset: 0.4em; }
+
+/* ---- Pixel stars ---------------------------------------------------------------- */
+/* One 4px square; every extra box-shadow is another star at a (vw, vh) position. */
+.stars {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 4px;
+	height: 4px;
+	background: transparent;
+	animation: twinkle 2s steps(1) infinite;
+}
+.stars-a { box-shadow:
+		82vw 15vh 0 0 #fff,
+		4vw 95vh 0 0 #fff,
+		36vw 32vh 0 0 #fff,
+		29vw 18vh 0 0 #fff,
+		95vw 14vh 0 0 #fff,
+		87vw 95vh 0 0 #fff,
+		70vw 12vh 0 0 #fff,
+		76vw 55vh 0 0 #fff,
+		5vw 4vh 0 0 #fff,
+		12vw 28vh 0 0 #fff,
+		30vw 65vh 0 0 #fff,
+		78vw 4vh 0 0 #fff,
+		72vw 26vh 0 0 #fff,
+		92vw 84vh 0 0 #fff,
+		90vw 70vh 0 0 #fff,
+		54vw 29vh 0 0 #fff,
+		58vw 76vh 0 0 #fff,
+		36vw 1vh 0 0 #fff,
+		98vw 21vh 0 0 #fff,
+		90vw 55vh 0 0 #fff,
+		44vw 36vh 0 0 #fff,
+		20vw 28vh 0 0 #fff,
+		98vw 44vh 0 0 #fff,
+		14vw 12vh 0 0 #fff,
+		49vw 13vh 0 0 #fff,
+		46vw 45vh 0 0 #fff,
+		78vw 34vh 0 0 #fff,
+		6vw 94vh 0 0 #fff,
+		59vw 69vh 0 0 #fff,
+		16vw 49vh 0 0 #fff,
+		11vw 71vh 0 0 #fff,
+		38vw 81vh 0 0 #fff,
+		80vw 47vh 0 0 #fff,
+		74vw 25vh 0 0 #fff,
+		91vw 9vh 0 0 #fff,
+		6vw 85vh 0 0 #fff,
+		30vw 99vh 0 0 #fff,
+		38vw 11vh 0 0 #fff,
+		30vw 13vh 0 0 #fff,
+		49vw 36vh 0 0 #fff,
+		59vw 82vh 0 0 #fff,
+		47vw 21vh 0 0 #fff,
+		48vw 46vh 0 0 #fff,
+		27vw 86vh 0 0 #fff,
+		35vw 90vh 0 0 #fff; }
+.stars-b { box-shadow:
+		88vw 83vh 0 0 #fff,
+		10vw 78vh 0 0 #fff,
+		82vw 22vh 0 0 #fff,
+		69vw 94vh 0 0 #fff,
+		32vw 21vh 0 0 #fff,
+		60vw 49vh 0 0 #fff,
+		35vw 82vh 0 0 #fff,
+		89vw 72vh 0 0 #fff,
+		29vw 88vh 0 0 #fff,
+		42vw 99vh 0 0 #fff,
+		8vw 30vh 0 0 #fff,
+		5vw 41vh 0 0 #fff,
+		52vw 35vh 0 0 #fff,
+		9vw 28vh 0 0 #fff,
+		73vw 92vh 0 0 #fff,
+		41vw 28vh 0 0 #fff,
+		84vw 64vh 0 0 #fff,
+		51vw 83vh 0 0 #fff,
+		59vw 19vh 0 0 #fff,
+		34vw 18vh 0 0 #fff,
+		32vw 96vh 0 0 #fff,
+		72vw 69vh 0 0 #fff,
+		34vw 96vh 0 0 #fff,
+		75vw 55vh 0 0 #fff,
+		75vw 52vh 0 0 #fff,
+		47vw 29vh 0 0 #fff,
+		18vw 66vh 0 0 #fff,
+		64vw 12vh 0 0 #fff,
+		97vw 7vh 0 0 #fff,
+		15vw 20vh 0 0 #fff,
+		81vw 21vh 0 0 #fff,
+		88vw 55vh 0 0 #fff,
+		77vw 9vh 0 0 #fff,
+		50vw 49vh 0 0 #fff,
+		77vw 60vh 0 0 #fff,
+		68vw 33vh 0 0 #fff,
+		71vw 2vh 0 0 #fff,
+		88vw 93vh 0 0 #fff,
+		15vw 88vh 0 0 #fff,
+		69vw 97vh 0 0 #fff,
+		35vw 99vh 0 0 #fff,
+		83vw 44vh 0 0 #fff,
+		15vw 38vh 0 0 #fff,
+		56vw 21vh 0 0 #fff,
+		59vw 1vh 0 0 #fff; animation-delay: -1s; }
+
+@keyframes twinkle {
+	0%   { opacity: 1; }
+	50%  { opacity: 0.15; }
+}
+
+/* ---- Ghosts ---------------------------------------------------------------------- */
+.ghost {
+	position: fixed;
+	z-index: 2;
+	width: min(13vw, 17vh);
+	height: auto;
+	pointer-events: none;
+	animation: bob 1.2s steps(2, jump-none) infinite alternate;
+}
+.ghost-left  { left: 4vw;  top: 10vh; }
+.ghost-right { right: 4vw; bottom: 10vh; scale: -1 1; animation-delay: -0.6s; }
+
+.gb { fill: #b8a1ff; }
+.gw { fill: #fff; }
+.gk { fill: var(--ink); }
+
+/* The feet swap between two frames, like a classic 2-frame sprite */
+.feet-a { animation: feet 0.6s steps(1) infinite; }
+.feet-b { animation: feet 0.6s steps(1) infinite; animation-delay: -0.3s; }
+
+@keyframes feet {
+	0%   { opacity: 1; }
+	50%  { opacity: 0; }
+}
+@keyframes bob {
+	from { translate: 0 0; }
+	to   { translate: 0 -1.2vh; }
+}
+
+.noscript { position: fixed; bottom: 2vh; width: 100%; text-align: center; font-size: 1.2vw; }
+
+/* People who asked their system for less motion get a still page */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after { animation: none !important; }
+}

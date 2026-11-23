@@ -35,7 +35,7 @@ if [ ! -d "/var/lib/mysql/${SQL_DATABASE}" ]; then
 
 	# --bootstrap makes mysqld read the SQL commands from stdin, execute them and
 	# exit. No server is started in background (no init.d, no socket to wait for,
-	# no "sleep"), so nothing runs in background before the final exec.
+	# wait loop), so nothing runs in background before the final exec.
 	# In bootstrap mode the grant tables are not loaded: the first FLUSH PRIVILEGES
 	# is required to make CREATE USER / GRANT / ALTER USER work.
 	# The anonymous users created by mariadb-install-db (''@'localhost') are removed:
@@ -66,7 +66,9 @@ printf '%b\n' "${GRAY}Inception: Starting MariaDB daemon in foreground...${RESET
 # Start the database in foreground
 #	exec replaces the shell process with mysqld, making it PID 1.
 #	mysqld handles SIGTERM itself, so "docker stop" shuts the database down cleanly.
-exec mysqld --user=mysql
+#	The port comes from the SQL_PORT variable of the .env file (3306 if unset), so
+#	it can be changed without editing any file inside the image.
+exec mysqld --user=mysql --port="${SQL_PORT:-3306}"
 
 # Perché @'%' invece di @'localhost'?
 # Nella riga della creazione dell'utente, SQL_USER@'%' permette all'utente di

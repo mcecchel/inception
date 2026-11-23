@@ -46,8 +46,12 @@ inception/
         │   └── tools/
         │       └── nginx_entrypoint.sh    # TLS certificate generation script
         ├── bonus/
-        │   └── adminer/
-        │       └── Dockerfile             # Adminer (PHP-FPM, pinned version)
+        │   ├── adminer/
+        │   │   └── Dockerfile             # Adminer (PHP-FPM, pinned version)
+        │   └── static/
+        │       ├── Dockerfile             # Static website: Debian + NGINX only
+        │       ├── conf/nginx.conf        # Serves /var/www/static on internal port 8080
+        │       └── site/                  # index.html, style.css, script.js, fonts/
         └── wordpress/
             ├── Dockerfile                 # WordPress/PHP-FPM container build instructions (Debian)
             ├── conf/
@@ -100,6 +104,7 @@ Edit `srcs/.env` with your editor of choice. The file must define:
 | -------- | ------- | ------------------------ |
 | `DOMAIN_NAME` | Host domain name | `mcecchel.42.fr` |
 | `SQL_DATABASE` | MariaDB database name | `wordpress` |
+| `SQL_PORT` | MariaDB TCP port (used by mysqld and WordPress) | `3306` |
 | `SQL_USER` | MariaDB application user | `wp_user` |
 | `SQL_PASSWORD` | MariaDB application password | Set locally in `srcs/.env` |
 | `SQL_ROOT_PASSWORD` | MariaDB root password | Set locally in `srcs/.env` |
@@ -131,7 +136,8 @@ The root `Makefile` automates directory creation, image building, and container 
 | Command | Internal Action |
 | ------- | --------------- |
 | `make up` / `make all` | Creates `/home/mcecchel/data/` directories, builds the images (`--build`, cached layers are reused) and starts containers in detached mode. |
-| `make down` | Stops and removes containers while keeping volume data intact. |
+| `make bonus` | Same as `make up` but with the Compose profile `bonus` active: also builds and starts Adminer and the static website. Mandatory containers already running are not restarted. |
+| `make down` | Stops and removes all containers (bonus included, via `--profile bonus`) while keeping volume data intact. |
 | `make status` | Displays the status of active containers (`docker compose ps`). |
 | `make logs` | Displays container logs (`docker compose logs`). |
 | `make clean` | Stops containers and removes unused Docker images/resources. |
@@ -261,6 +267,18 @@ openssl s_client -connect mcecchel.42.fr:443 -tls1_3
 ```
 
 ---
+
+## Changing the port of a service
+
+After any change below, rebuild and restart with `make up` (**not** `make re`: it deletes the data), then check with `make status`.
+
+| Service | Where the port is defined | Notes |
+| ------- | ------------------------- | ----- |
+| **MariaDB** (3306) | `SQL_PORT` in `srcs/.env` | Single source: mysqld starts with `--port=${SQL_PORT}`, WordPress rewrites `DB_HOST` in `wp-config.php` at every start, the healthcheck uses the unix socket. In Adminer, type `mariadb:<port>` as server. |
+| **NGINX** (443) | `listen` lines in `nginx.conf` **and** `ports:` in `docker-compose.yml` | The site is then reached at `https://<domain>:<port>`. WordPress builds its URLs from the `Host` header (`WP_HOME`/`WP_SITEURL` in `wp-config.php`, set by `wp_entrypoint.sh`), so links and CSS follow the new port. If only the host side of `ports:` changes (e.g. `8443:443`), `listen` stays 443. `EXPOSE` in the Dockerfile is documentation only. |
+| **WordPress / php-fpm** (9000) | `listen` in `conf/www.conf` **and** `fastcgi_pass wordpress:<port>` in `nginx.conf` | Both must match, otherwise NGINX answers 502. |
+| **Static website** (8080, bonus) | `listen` in `static/conf/nginx.conf` **and** `$static_upstream` in the main `nginx.conf` | Both must match. Not published on the host. |
+| **Adminer / php-fpm** (9000, bonus) | `sed` line in the Adminer Dockerfile **and** `$adminer_upstream` in `nginx.conf` | Both must match. |
 
 ## Troubleshooting
 

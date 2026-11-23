@@ -11,6 +11,13 @@ DATA_PATH   = /home/$(LOGIN)/data
 # Percorso del file docker-compose.yml (si trova nella cartella srcs/)
 COMPOSE_FILE = ./srcs/docker-compose.yml
 
+# Comando base (solo mandatory: mariadb, wordpress, nginx)
+COMPOSE      = docker compose -f $(COMPOSE_FILE)
+# Comando con il profilo "bonus" attivo: serve ai comandi che devono vedere anche
+# i servizi bonus (down, ps, logs). Senza profilo, Compose ignora quei container
+# e "make down" lascerebbe adminer in esecuzione.
+COMPOSE_ALL  = $(COMPOSE) --profile bonus
+
 # **************************************************************************** #
 #    RULES                                                                     #
 # **************************************************************************** #
@@ -25,25 +32,34 @@ prepare:
 	@mkdir -p $(DATA_PATH)/db_data
 	@mkdir -p $(DATA_PATH)/wp_data
 
-# Avvia i container in background costruendo le immagini se necessario
+# Avvia i container in background costruendo le immagini se necessario.
+# Parte solo il mandatory: i servizi bonus (profilo "bonus") restano spenti.
+# Il down iniziale usa COMPOSE_ALL cosi' rimuove anche un eventuale adminer
+# rimasto da un precedente "make bonus".
 up: prepare
 	@echo "Removing existing containers..."
-	@docker compose -f $(COMPOSE_FILE) down --remove-orphans
+	@$(COMPOSE_ALL) down --remove-orphans
 	@echo "Starting $(NAME) containers..."
-	@docker compose -f $(COMPOSE_FILE) up -d --build --remove-orphans
+	@$(COMPOSE) up -d --build --remove-orphans
+
+# Avvia il mandatory + i servizi bonus (per ora solo Adminer).
+# Non fa il down iniziale: i container mandatory gia' attivi restano in piedi.
+bonus: prepare
+	@echo "Starting $(NAME) containers with bonus services..."
+	@$(COMPOSE_ALL) up -d --build --remove-orphans
 
 # Ferma e rimuove i container in esecuzione
 down:
 	@echo "Stopping $(NAME) containers..."
-	@docker compose -f $(COMPOSE_FILE) down
+	@$(COMPOSE_ALL) down
 
 # Mostra lo stato dei container
 status:
-	@docker compose -f $(COMPOSE_FILE) ps
+	@$(COMPOSE_ALL) ps
 
 # Mostra i log di tutti i servizi in tempo reale
 logs:
-	@docker compose -f $(COMPOSE_FILE) logs -f
+	@$(COMPOSE_ALL) logs -f
 
 # Pulizia standard: ferma i container e rimuove immagini/reti inutilizzate
 clean: down
@@ -60,4 +76,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all prepare up down status logs clean fclean re
+.PHONY: all prepare up bonus down status logs clean fclean re

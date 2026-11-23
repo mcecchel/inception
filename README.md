@@ -50,7 +50,8 @@ Data persistence is handled by Docker local volumes mapped to directories on the
 | **nginx** | `nginx` | TLS termination, reverse proxy, static files | 443 (host) |
 | **wordpress** | `wordpress` | PHP-FPM application server, WP-CLI bootstrap | 9000 (internal) |
 | **mariadb** | `mariadb` | Relational MySQL database server | 3306 (internal) |
-| **adminer** *(bonus)* | `adminer` | Database web UI, PHP-FPM behind NGINX at `/adminer` | 9000 (internal) |
+| **static** *(bonus)* | `static` | Static pixel-art website ("The Game": 30-minute countdown), plain HTML/CSS/JS served by its own NGINX. Reached through the main NGINX at `/thegame/`. Compose profile `bonus` | 8080 (internal) |
+| **adminer** *(bonus)* | `adminer` | Database web UI, PHP-FPM behind NGINX at `/adminer`. Compose profile `bonus`: started only by `make bonus` | 9000 (internal) |
 
 **Volumes:**
 
@@ -94,6 +95,8 @@ make up
 | --- | ----------- |
 | `https://mcecchel.42.fr` | WordPress front page |
 | `https://mcecchel.42.fr/wp-admin` | WordPress admin panel |
+| `https://mcecchel.42.fr/adminer` | Adminer *(bonus, after `make bonus`)* |
+| `https://mcecchel.42.fr/thegame/` | Static website *(bonus, after `make bonus`)* |
 
 *Note: The browser will warn about a self-signed TLS certificate — this is expected.*
 
@@ -102,7 +105,8 @@ make up
 | Command | Action |
 | ------- | ------ |
 | `make all` / `make up` | Creates host directories and starts containers in the background. |
-| `make down` | Stops and removes containers (data is preserved in volumes). |
+| `make bonus` | Starts the mandatory stack **plus** the bonus services (Adminer, reachable at `https://mcecchel.42.fr/adminer`). |
+| `make down` | Stops and removes all containers, bonus included (data is preserved in volumes). |
 | `make status` | Shows the status of running containers. |
 | `make logs` | Displays real-time logs for all services. |
 | `make clean` | Stops containers and runs `docker system prune -a`: removes ALL unused images/networks on the machine, not only this project's. |
@@ -123,6 +127,8 @@ In this project, Docker is used to run three independent services (NGINX, WordPr
 
 - **Debian Base:** Images are built from the penultimate stable version of Debian, providing a stable and familiar ecosystem while complying with the 42 subject constraints.
 - **Custom Entrypoints:** Shell scripts are used as entrypoints to handle automated setup (like WP-CLI installations and MariaDB bootstrapping). Each script ends with `exec` on the main service (`nginx`, `php-fpm8.2 -F`, `mysqld`), which replaces the shell and makes the service PID 1, so it receives `SIGTERM` directly and shuts down gracefully.
+- **Bonus isolated from the mandatory part:** bonus services have the Compose profile `bonus`, so `make` never starts them and the mandatory stack does not depend on them. NGINX resolves the Adminer hostname at request time, so it starts even without the Adminer container.
+- **Dynamic site URL:** `WP_HOME` and `WP_SITEURL` are computed from the request `Host` header (accepted only if it matches `DOMAIN_NAME`, with an optional port), so the website keeps working if the NGINX port is changed.
 - **No Infinite Loops:** Commands like `tail -f` or `sleep infinity` are strictly avoided. MariaDB readiness is handled by a Compose `healthcheck` with `depends_on: condition: service_healthy`, not by a wait loop.
 
 ---
@@ -162,6 +168,8 @@ In this project, Docker is used to run three independent services (NGINX, WordPr
 - [Docker Compose file reference](https://docs.docker.com/reference/compose-file/)
 
 ### Complementary notes and guides
+
+- [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) pixel font by The Press Start 2P Project Authors, SIL Open Font License 1.1 (self-hosted, licence in `srcs/requirements/bonus/static/site/fonts/OFL.txt`).
 
 - [LinuxHub - Creare un Dockerfile](https://linuxhub.it/articles/howto-creare-un-Dockerfile/)
 - [NGINX documentation](https://nginx.org/en/docs/)

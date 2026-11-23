@@ -32,14 +32,33 @@ if [ ! -f "wp-config.php" ]; then
 	printf '%b\n' "${GRAY}Inception: Generating wp-config.php file...${RESETCOLOR}"
 
 	# Create wp-config.php with database credentials
-	# Note: dbhost MUST be set to 'mariadb:3306' (the container name in docker-compose network)
+	# Note: dbhost MUST use the container name in the docker-compose network (mariadb)
+	# followed by the MariaDB port (SQL_PORT in .env, 3306 if unset)
 	wp config create \
 		--allow-root \
 		--dbname="${SQL_DATABASE}" \
 		--dbuser="${SQL_USER}" \
 		--dbpass="${SQL_PASSWORD}" \
-		--dbhost="mariadb:3306"
+		--dbhost="mariadb:${SQL_PORT:-3306}"
 fi
+
+# wp-config.php lives in the wp_data volume, so it survives rebuilds and is NOT
+# regenerated above. Keep DB_HOST aligned with SQL_PORT at every start: otherwise
+# changing the MariaDB port would leave the old port in the persisted file.
+wp config set DB_HOST "mariadb:${SQL_PORT:-3306}" --allow-root
+
+# The site URL must follow the address (and port) the browser really uses, otherwise
+# changing the NGINX port would leave links, CSS and redirects pointing to the old one.
+# WP_HOME / WP_SITEURL are therefore computed by PHP from the Host header:
+#\t- the Host is accepted only if it is DOMAIN_NAME, optionally followed by :port
+#\t  (preg_quote escapes the dots), so a forged Host header cannot change the URL
+#\t- otherwise (and in WP-CLI, which has no web request) it falls back to DOMAIN_NAME
+# --raw writes the value as PHP code instead of a quoted string; it is rewritten at
+# every start, so a change of DOMAIN_NAME in .env is applied to the persisted file.
+WP_URL_EXPR="(isset(\$_SERVER['HTTP_HOST']) && preg_match('/^' . preg_quote('${DOMAIN_NAME}', '/') . '(:[0-9]+)?\$/', \$_SERVER['HTTP_HOST'])) ? 'https://' . \$_SERVER['HTTP_HOST'] : 'https://${DOMAIN_NAME}'"
+wp config delete WP_HOME WP_SITEURL --allow-root 2>/dev/null || true
+wp config set WP_HOME "${WP_URL_EXPR}" --raw --type=constant --anchor="/* That's all, stop editing!" --allow-root
+wp config set WP_SITEURL "${WP_URL_EXPR}" --raw --type=constant --anchor="/* That's all, stop editing!" --allow-root
 
 # 3. Install WordPress if the database does not contain the site yet.
 # This is checked on the database (not on wp-config.php), so an interrupted

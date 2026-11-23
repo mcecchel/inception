@@ -38,8 +38,10 @@ services:
     networks:
       - inception
     # Healthy only when the WordPress user can really log in. WordPress waits for it.
+    # No "-h"/"--port": the client uses the local unix socket, so the check keeps
+    # working even if the MariaDB TCP port is changed in its configuration.
     healthcheck:
-      test: ["CMD-SHELL", "mariadb -h 127.0.0.1 -u\"$$SQL_USER\" -p\"$$SQL_PASSWORD\" \"$$SQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "mariadb -u\"$$SQL_USER\" -p\"$$SQL_PASSWORD\" \"$$SQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -92,22 +94,26 @@ services:
       - DOMAIN_NAME=${DOMAIN_NAME}
     # Expose HTTPS to host. HOST_PORT:CONTAINER_PORT
     ports:
-      - "443:443"
+    - "443:443"
     # Access WordPress files in read-only to serve static files (css, js, images)
     volumes:
       - wp_data:/var/www/html:ro
     networks:
       - inception
-    # Ensure NGINX starts after WordPress and Adminer (nginx.conf resolves both hostnames at startup)
+    # Ensure NGINX starts after WordPress. Adminer is NOT a dependency: it is an
+    # optional bonus service, so the mandatory stack must start without it
     depends_on:
       - wordpress
-      - adminer
     restart: always
 
 # -------------------------------------------------------------------------- #
-# 4. Adminer (Database Management)
+# 4. Adminer (Database Management) - BONUS
 # -------------------------------------------------------------------------- #
   adminer:
+    # Services with a profile are skipped by a plain "docker compose up", so the
+    # mandatory stack (mariadb, wordpress, nginx) never depends on the bonus part.
+    # Adminer is started only with "--profile bonus" (see "make bonus").
+    profiles: ["bonus"]
     build:
       context: ./requirements/bonus/adminer
       dockerfile: Dockerfile
@@ -119,6 +125,23 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    restart: always
+
+# -------------------------------------------------------------------------- #
+# 5. Static website (The Game) - BONUS
+# -------------------------------------------------------------------------- #
+  static:
+    # Optional bonus service: started only with "--profile bonus" (see "make bonus")
+    profiles: ["bonus"]
+    build:
+      context: ./requirements/bonus/static
+      dockerfile: Dockerfile
+    container_name: static
+    image: static:inception
+    pull_policy: never
+    # No "ports": the site is reached only through NGINX (https://<domain>/thegame/)
+    networks:
+      - inception
     restart: always
 
 # **************************************************************************** #
