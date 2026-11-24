@@ -8,67 +8,67 @@ NAME        = inception
 LOGIN       = mcecchel
 DATA_PATH   = /home/$(LOGIN)/data
 
-# Percorso del file docker-compose.yml (si trova nella cartella srcs/)
+# Path to the docker-compose.yml file (located inside the srcs/ directory)
 COMPOSE_FILE = ./srcs/docker-compose.yml
 
-# Comando base (solo mandatory: mariadb, wordpress, nginx)
+# Base command (mandatory services only: mariadb, wordpress, nginx)
 COMPOSE      = docker compose -f $(COMPOSE_FILE)
-# Comando con il profilo "bonus" attivo: serve ai comandi che devono vedere anche
-# i servizi bonus (down, ps, logs). Senza profilo, Compose ignora quei container
-# e "make down" lascerebbe adminer in esecuzione.
+# Command with the "bonus" profile enabled: needed for commands that must also see
+# bonus services (down, ps, logs). Without the profile, Compose ignores those containers
+# and "make down" would leave adminer running.
 COMPOSE_ALL  = $(COMPOSE) --profile bonus
 
 # **************************************************************************** #
 #    RULES                                                                     #
 # **************************************************************************** #
 
-# Target principale: crea le cartelle sull'host ed effettua la build/up
+# Main target: creates host directories and builds/starts the containers
 all: up
 
-# Crea le cartelle sull'host necessarie ai volumi PRIMA di avviare Docker.
-# In questo modo eviti che Docker le crei automaticamente con permessi da root.
+# Creates the host directories required for volumes BEFORE starting Docker.
+# This prevents Docker from creating them automatically with root ownership.
 prepare:
 	@echo "Creating host data directories for volumes in $(DATA_PATH)..."
 	@mkdir -p $(DATA_PATH)/db_data
 	@mkdir -p $(DATA_PATH)/wp_data
 
-# Avvia i container in background costruendo le immagini se necessario.
-# Parte solo il mandatory: i servizi bonus (profilo "bonus") restano spenti.
-# Il down iniziale usa COMPOSE_ALL cosi' rimuove anche un eventuale adminer
-# rimasto da un precedente "make bonus".
+# Starts containers in the background, building images if necessary.
+# Starts mandatory services only: bonus services ("bonus" profile) stay stopped.
+# The initial down uses COMPOSE_ALL so it also removes any leftover adminer
+# from a previous "make bonus".
 up: prepare
 	@echo "Removing existing containers..."
 	@$(COMPOSE_ALL) down --remove-orphans
 	@echo "Starting $(NAME) containers..."
 	@$(COMPOSE) up -d --build --remove-orphans
 
-# Avvia il mandatory + i servizi bonus (per ora solo Adminer).
-# Non fa il down iniziale: i container mandatory gia' attivi restano in piedi.
+# Starts mandatory + bonus services (currently Adminer only).
+# Skips the initial down: already running mandatory containers stay up.
 bonus: prepare
 	@echo "Starting $(NAME) containers with bonus services..."
 	@$(COMPOSE_ALL) up -d --build --remove-orphans
 
-# Ferma e rimuove i container in esecuzione
+# Stops and removes running containers
 down:
 	@echo "Stopping $(NAME) containers..."
 	@$(COMPOSE_ALL) down
 
-# Mostra lo stato dei container
+# Displays container status
 status:
 	@$(COMPOSE_ALL) ps
 
-# Mostra i log di tutti i servizi in tempo reale
+# Streams logs for all services in real time
 logs:
 	@$(COMPOSE_ALL) logs -f
 
-# Pulizia standard: ferma i container e rimuove immagini/reti inutilizzate
+# Standard cleanup: stops containers and removes unused images/networks
 clean: down
 	@echo "Cleaning unused Docker resources..."
 	@docker system prune -a --force
 
-# Pulizia profonda: rimuove container, reti, volumi Docker e cancella le cartelle sull'host.
-# I file nelle cartelle appartengono agli utenti interni ai container (mysql, root),
-# quindi servono i permessi di root per cancellarli.
+# Deep cleanup: removes containers, networks, Docker volumes, and host directories.
+# Files inside those directories belong to container users (mysql, root),
+# so root permissions are required to delete them.
 fclean: clean
 	@echo "Removing persistent data and volumes..."
 	@docker volume rm db_data wp_data 2>/dev/null || true
