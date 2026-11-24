@@ -8,9 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy the NGINX configuration file from the host into the image
 COPY ./conf/nginx.conf /etc/nginx/nginx.conf
 
-# Copy the website (html, css, js, font) into the web root
+# Copy the website (html, css, js) into the web root
 COPY index.html style.css script.js /var/www/static/
-COPY fonts/ /var/www/static/fonts/
 
 # Make sure the NGINX workers (unprivileged) can read every file whatever the host permissions are
 RUN chmod -R a+rX /var/www/static
