@@ -3,3 +3,4 @@ secrets/
 *.txt
 *.pub
 ssh.txt*
+!**/OFL.txt

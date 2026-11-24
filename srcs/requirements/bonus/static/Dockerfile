@@ -10,6 +10,8 @@ COPY ./conf/nginx.conf /etc/nginx/nginx.conf
 
 # Copy the website (html, css, js, font) into the web root
 COPY index.html style.css script.js /var/www/static/
+COPY fonts/ /var/www/static/fonts/
+
 # Make sure the NGINX workers (unprivileged) can read every file whatever the host permissions are
 RUN chmod -R a+rX /var/www/static
 
